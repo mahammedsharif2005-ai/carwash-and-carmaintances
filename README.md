@@ -1,4 +1,4 @@
-# Unique Showroom
+# carwash-and-carmaintances
 
 The showroom storefront is a React app. Its maintenance-store checkout creates
 pending orders in a Node.js API backed by MySQL, and the admin dashboard at
