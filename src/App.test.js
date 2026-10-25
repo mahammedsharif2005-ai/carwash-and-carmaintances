@@ -1,46 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from './App';
-import { SiteHeader } from './components/SiteHeader';
 import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from './pages/LoginPage';
 
 const originalFetch = global.fetch;
-const originalInnerWidth = window.innerWidth;
 
 afterEach(() => {
   global.fetch = originalFetch;
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
   sessionStorage.removeItem('adminToken');
-  sessionStorage.removeItem('customerProfile');
-});
-
-test('requires customer sign-in before product checkout and resumes checkout afterward', async () => {
-  window.history.replaceState({}, '', '/');
-  global.fetch = jest.fn((url) => Promise.resolve({
-    ok: true,
-    json: async () => url.endsWith('/auth/customer')
-      ? { customer: { id: 1, name: 'Aanya Mehta', email: 'aanya@example.com', phone: '' } }
-      : {},
-  }));
-  render(<App />);
-
-  fireEvent.click(screen.getByRole('link', { name: 'Maintenance' }));
-  fireEvent.click(screen.getAllByRole('button', { name: 'Add to Cart' })[0]);
-  fireEvent.click(screen.getByRole('button', { name: 'Open cart' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Sign in to checkout' }));
-
-  expect(window.location.pathname).toBe('/login');
-  expect(screen.getByRole('heading', { name: 'Come on in.' })).toBeInTheDocument();
-
-  fireEvent.change(screen.getByLabelText(/Your name/), { target: { value: 'Aanya Mehta' } });
-  fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aanya@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'securepass123' } });
-  fireEvent.click(screen.getByRole('button', { name: /Continue to showroom/ }));
-
-  expect(await screen.findByRole('heading', { name: 'Delivery details' })).toBeInTheDocument();
-  expect(window.location.pathname).toBe('/maintenance');
-  expect(screen.getByLabelText('Full name')).toHaveValue('Aanya Mehta');
-  expect(screen.getByLabelText('Email address')).toHaveValue('aanya@example.com');
 });
 
 test('opens the maintenance store as a separate page', () => {
@@ -58,40 +25,6 @@ test('opens the maintenance store as a separate page', () => {
   expect(screen.getByRole('contentinfo')).toHaveTextContent('Unique Car Care & Maintenance India Pvt. Ltd.');
   expect(screen.queryByText('Best Seller')).not.toBeInTheDocument();
   expect(screen.queryByText(/-\d+%|Save \d+%/)).not.toBeInTheDocument();
-});
-
-test('mobile showroom navigation can be opened and closed', () => {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-  window.history.replaceState({}, '', '/');
-  render(<App />);
-
-  const menuToggle = screen.getByRole('button', { name: 'Toggle main navigation' });
-  const navigation = screen.getByRole('navigation', { name: 'Main Navigation' });
-
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-  fireEvent.click(menuToggle);
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
-  expect(navigation).toHaveClass('hero-nav-links-open');
-
-  fireEvent.click(screen.getByRole('link', { name: 'About Us' }));
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-  expect(window.location.pathname).toBe('/about');
-});
-
-test('mobile interior-page navigation can be opened and closed', () => {
-  const onNavigate = jest.fn();
-  render(<SiteHeader onNavigate={onNavigate} currentPage="about" />);
-
-  const menuToggle = screen.getByRole('button', { name: 'Toggle main navigation' });
-  const navigation = screen.getByRole('navigation', { name: 'Main navigation' });
-
-  fireEvent.click(menuToggle);
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
-  expect(navigation).toHaveClass('store-site-nav-open');
-
-  fireEvent.click(screen.getByRole('button', { name: 'Cars' }));
-  expect(onNavigate).toHaveBeenCalledWith('/cars');
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('opens the dedicated about page from the main navigation', () => {
@@ -169,13 +102,6 @@ test('shows order metrics in the admin dashboard', async () => {
     total: 999,
     status: 'pending',
   };
-  const customer = {
-    id: 12,
-    name: 'Aanya Mehta',
-    email: 'aanya@example.com',
-    phone: '+91 9876543210',
-    createdAt: '2026-10-20T10:00:00.000Z',
-  };
   sessionStorage.setItem('adminToken', 'test-admin-token');
   global.fetch = jest.fn((url) => Promise.resolve({
     ok: true,
@@ -183,8 +109,6 @@ test('shows order metrics in the admin dashboard', async () => {
       ? { orders: [order] }
       : url.endsWith('/bookings')
         ? { bookings: [booking], summary: { total: 1, uniqueCustomers: 1, carWashRequests: 1 } }
-        : url.endsWith('/customers')
-          ? { customers: [customer] }
         : { discounts: [] },
   }));
 
@@ -202,12 +126,6 @@ test('shows order metrics in the admin dashboard', async () => {
   fireEvent.click(sidebarToggle);
   expect(sidebarToggle.closest('.admin-shell')).not.toHaveClass('admin-shell-sidebar-collapsed');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
-  expect(screen.getByText('1 pending order')).toBeInTheDocument();
-  expect(screen.getByText('1 pending service booking')).toBeInTheDocument();
-  fireEvent.click(screen.getByText('1 pending order'));
-  expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
-
   fireEvent.click(screen.getByRole('button', { name: 'View order UQ-TEST-1234' }));
   expect(screen.getByRole('dialog', { name: 'Order UQ-TEST-1234' })).toBeInTheDocument();
   expect(screen.getByText('3M Auto Wash Shampoo')).toBeInTheDocument();
@@ -223,75 +141,24 @@ test('shows order metrics in the admin dashboard', async () => {
   expect(screen.getAllByText('Signature Snow Foam Wash').length).toBeGreaterThan(0);
   expect(screen.getByLabelText('Filter bookings by date')).toHaveValue('all');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Customers' }));
-  expect(screen.getByRole('heading', { name: /Customer accounts/ })).toBeInTheDocument();
-  expect(screen.getByText('aanya@example.com')).toBeInTheDocument();
-  expect(screen.getByText('+91 9876543210')).toBeInTheDocument();
-
   fireEvent.click(screen.getByRole('button', { name: 'Discounts' }));
   expect(screen.getByRole('heading', { name: 'Discounts' })).toBeInTheDocument();
   fireEvent.click(screen.getAllByRole('button', { name: /Create discount/ })[0]);
   expect(screen.getByRole('heading', { name: 'Create discount' })).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Reports' }));
-  expect(screen.getByRole('heading', { name: 'Monthly report' })).toBeInTheDocument();
-  fireEvent.change(screen.getByRole('textbox', { name: 'Search reports' }), { target: { value: 'Aarav' } });
-  fireEvent.change(screen.getByLabelText('Report start date'), { target: { value: '2026-10-22' } });
-  fireEvent.change(screen.getByLabelText('Report end date'), { target: { value: '2026-10-22' } });
-  expect(screen.getByText('October 2026').closest('tr')).toHaveTextContent('₹599');
-  fireEvent.change(screen.getByLabelText('Report period'), { target: { value: 'year' } });
-  expect(screen.getByRole('heading', { name: 'Yearly report' })).toBeInTheDocument();
-  expect(screen.getByText('2026').closest('tr')).toHaveTextContent('₹599');
-});
-
-test('mobile admin menu toggle opens and closes the sidebar', async () => {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-  sessionStorage.setItem('adminToken', 'test-admin-token');
-  global.fetch = jest.fn((url) => Promise.resolve({
-    ok: true,
-    json: async () => url.endsWith('/orders')
-      ? { orders: [] }
-      : url.endsWith('/bookings')
-        ? { bookings: [], summary: { total: 0, uniqueCustomers: 0, carWashRequests: 0 } }
-        : url.endsWith('/customers')
-          ? { customers: [] }
-        : { discounts: [] },
-  }));
-
-  render(<AdminPage onNavigate={() => {}} />);
-  const menuToggle = await screen.findByRole('button', { name: 'Toggle sidebar navigation' });
-
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-  fireEvent.click(menuToggle);
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
-  expect(document.getElementById('admin-sidebar')).toHaveClass('admin-sidebar-open');
-
-  fireEvent.click(screen.getByRole('button', { name: 'Close menu' }));
-  expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
-  expect(document.getElementById('admin-sidebar')).not.toHaveClass('admin-sidebar-open');
 });
 
 test('customer sign-in takes a name and email and continues to the showroom', async () => {
   const onNavigate = jest.fn();
-  global.fetch = jest.fn(() => Promise.resolve({
-    ok: true,
-    json: async () => ({
-      customer: { id: 1, name: 'Aanya Mehta', email: 'aanya@example.com', phone: '' },
-    }),
-  }));
   render(<LoginPage onNavigate={onNavigate} />);
 
-  fireEvent.change(screen.getByLabelText(/Your name/), { target: { value: 'Aanya Mehta' } });
+  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Aanya Mehta' } });
   fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'aanya@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'securepass123' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue to showroom' }));
 
-  await waitFor(() => expect(onNavigate).toHaveBeenCalledWith('/'));
+  expect(onNavigate).toHaveBeenCalledWith('/');
   expect(JSON.parse(sessionStorage.getItem('customerProfile'))).toEqual({
-    id: 1,
     name: 'Aanya Mehta',
     email: 'aanya@example.com',
-    phone: '',
   });
 });
 

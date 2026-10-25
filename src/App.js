@@ -34,8 +34,6 @@ function App() {
   const [currentPath, setCurrentPath] = useState(
     () => window.location.pathname.replace(/\/+$/, '') || '/'
   );
-  const [loginReturnTo, setLoginReturnTo] = useState('/');
-  const [resumeCheckout, setResumeCheckout] = useState(false);
 
   // ── Cart State ──
   const [cartItems, setCartItems] = useState([]);
@@ -52,13 +50,6 @@ function App() {
     window.history.pushState({}, '', path);
     setCurrentPath(path);
   }, []);
-
-  const requireCustomerSignIn = useCallback(() => {
-    setLoginReturnTo('/maintenance');
-    setResumeCheckout(true);
-    navigateTo('/login');
-  }, [navigateTo]);
-  const clearCheckoutResume = useCallback(() => setResumeCheckout(false), []);
 
   const handleOpenBooking = (car = null, serviceId = 'ceramic-spa') => {
     if (car) setSelectedCar(car);
@@ -94,14 +85,10 @@ function App() {
   }, []);
 
   const handleCheckout = useCallback(async (orderDetails) => {
-    if (!getCustomerProfile()) {
-      requireCustomerSignIn();
-      throw new Error('Please sign in before placing your order.');
-    }
     const order = await createOrder(orderDetails);
     setCartItems([]);
     return order;
-  }, [requireCustomerSignIn]);
+  }, []);
 
   const handleServiceBooking = useCallback(async (bookingDetails) => {
     const booking = await createServiceBooking(bookingDetails);
@@ -120,7 +107,7 @@ function App() {
   return (
     <>
       {currentPath === '/login' ? (
-        <LoginPage onNavigate={navigateTo} returnTo={loginReturnTo} />
+        <LoginPage onNavigate={navigateTo} />
       ) : currentPath.startsWith('/admin') ? (
         sessionStorage.getItem('adminToken')
           ? <AdminPage onNavigate={navigateTo} onSignOut={handleAdminSignOut} />
@@ -163,9 +150,6 @@ function App() {
             onCheckout={handleCheckout}
             onNavigate={navigateTo}
             customerProfile={getCustomerProfile()}
-            onRequireSignIn={requireCustomerSignIn}
-            resumeCheckout={resumeCheckout}
-            onCheckoutResume={clearCheckoutResume}
             onSignOut={handleCustomerSignOut}
             onOpenBooking={() => handleOpenBooking(selectedCar)}
           />

@@ -9,7 +9,7 @@ import { SiteHeader } from './SiteHeader';
 /* ═══════════════════════════════════════════════════════════
    CART SIDEBAR COMPONENT
 ════════════════════════════════════════════════════════════ */
-const CartSidebar = ({ cartItems, onUpdateQty, onRemove, onClose, onCheckout, isSignedIn }) => {
+const CartSidebar = ({ cartItems, onUpdateQty, onRemove, onClose, onCheckout }) => {
   const total = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
   const totalSavings = cartItems.reduce((s, i) => s + ((i.originalPrice || i.price) - i.price) * i.qty, 0);
 
@@ -94,7 +94,7 @@ const CartSidebar = ({ cartItems, onUpdateQty, onRemove, onClose, onCheckout, is
               <span>Free delivery on orders above ₹999 across India</span>
             </div>
             <button className="checkout-btn" onClick={onCheckout}>
-              {isSignedIn ? 'Proceed to Checkout' : 'Sign in to checkout'} <ArrowRight size={16} />
+              Proceed to Checkout <ArrowRight size={16} />
             </button>
             <button className="continue-shopping-btn" onClick={onClose}>
               Continue Shopping
@@ -195,7 +195,7 @@ const SORT_OPTIONS = [
 /* ═══════════════════════════════════════════════════════════
    MAIN STORE PAGE COMPONENT
 ════════════════════════════════════════════════════════════ */
-export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFromCart, onCheckout, onNavigate, customerProfile, onRequireSignIn, resumeCheckout, onCheckoutResume, onSignOut, onOpenBooking }) => {
+export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFromCart, onCheckout, onNavigate, customerProfile, onSignOut, onOpenBooking }) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
@@ -207,12 +207,7 @@ export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFro
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [customer, setCustomer] = useState({
-    name: customerProfile?.name || '',
-    email: customerProfile?.email || '',
-    phone: customerProfile?.phone || '',
-    address: '',
-  });
+  const [customer, setCustomer] = useState({ name: '', email: '', phone: '', address: '' });
   const [discountCode, setDiscountCode] = useState('');
 
   const sortDropdownRef = useRef(null);
@@ -230,15 +225,6 @@ export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFro
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSortOpen]);
-
-  useEffect(() => {
-    if (resumeCheckout && customerProfile && cartItems.length > 0) {
-      setIsCartOpen(false);
-      setCheckoutError('');
-      setIsCheckoutOpen(true);
-      onCheckoutResume();
-    }
-  }, [resumeCheckout, customerProfile, cartItems.length, onCheckoutResume]);
 
   const totalCartItems = cartItems.reduce((s, i) => s + i.qty, 0);
 
@@ -292,10 +278,6 @@ export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFro
   };
 
   const openCheckout = () => {
-    if (!customerProfile) {
-      onRequireSignIn();
-      return;
-    }
     setIsCartOpen(false);
     setCheckoutError('');
     setIsCheckoutOpen(true);
@@ -339,6 +321,8 @@ export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFro
               Genuine oils, filters, coatings &amp; care products — delivered to your doorstep across India.
             </p>
           </div>
+
+          <button className="store-admin-link" onClick={() => onNavigate('/admin')}>Admin dashboard <ArrowRight size={14} /></button>
 
           {/* Cart Button */}
           <button
@@ -591,7 +575,6 @@ export const StorePage = ({ cartItems, onAddToCart, onUpdateCartQty, onRemoveFro
           onRemove={onRemoveFromCart}
           onClose={() => setIsCartOpen(false)}
           onCheckout={openCheckout}
-          isSignedIn={Boolean(customerProfile)}
         />
       )}
       </section>

@@ -28,7 +28,6 @@ async function request(path, options = {}) {
 }
 
 export const getOrders = () => request('/orders');
-export const getCustomers = () => request('/customers');
 export const updateOrderStatus = (id, status) => request(`/orders/${id}/status`, {
   method: 'PATCH',
   body: JSON.stringify({ status }),
@@ -57,10 +56,6 @@ export const updateServiceBookingStatus = (id, status) => request(`/bookings/${i
   body: JSON.stringify({ status }),
 });
 export const adminLogin = (credentials) => request('/auth/admin', {
-  method: 'POST',
-  body: JSON.stringify(credentials),
-});
-export const customerLogin = (credentials) => request('/auth/customer', {
   method: 'POST',
   body: JSON.stringify(credentials),
 });

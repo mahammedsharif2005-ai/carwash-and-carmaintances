@@ -1,18 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Activity, ArrowRight, BadgePercent, BarChart3, Bell,
-  CalendarDays, Check, CheckCircle2, ChevronDown, CircleDollarSign, Clock3, Eye, LayoutDashboard,
-  Menu, Package, Plus, Search, Settings2, ShieldCheck, ShoppingBag,
+  Activity, ArrowRight, BadgePercent, Bell,
+  CalendarDays, CarFront, Check, CheckCircle2, ChevronDown, CircleDollarSign, Clock3, Download, Eye, LayoutDashboard,
+  LogOut, Menu, Package, Plus, Search, Settings2, ShieldCheck, ShoppingBag,
   Tag, Users, X,
 } from 'lucide-react';
 import {
-  createDiscount, deleteDiscount, getCustomers, getDiscounts, getOrders, updateDiscount,
+  createDiscount, deleteDiscount, getDiscounts, getOrders, updateDiscount,
   getServiceBookings, updateOrderStatus, updateServiceBookingStatus,
 } from '../services/api';
-import AdminSidebar from '../components/AdminSidebar';
-import { EmptyState, MetricCard } from '../components/AdminDataViews';
 import { Toast } from '../components/Toast';
-import ServiceBookingsPage from './ServiceBookingsPage';
 import './AdminPage.css';
 
 const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
@@ -23,80 +20,45 @@ const dateKey = (value) => {
   const date = new Date(value);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
-const dateKeySafe = (value) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : dateKey(date);
+const dateOffset = (days) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - days);
+  return date;
 };
 const statusLabel = (status) => status.charAt(0).toUpperCase() + status.slice(1);
-const buildPeriodReports = (orders, bookings, period) => {
-  const reports = new Map();
-  const addRecord = (record, type) => {
-    const date = dateKeySafe(record.createdAt);
-    if (!date) return;
-    const key = period === 'month' ? date.slice(0, 7) : date.slice(0, 4);
-    const report = reports.get(key) || {
-      key,
-      label: period === 'month'
-        ? new Date(`${key}-01T00:00:00`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-        : key,
-      orderCount: 0,
-      orderRevenue: 0,
-      bookingCount: 0,
-      bookingValue: 0,
-    };
-    if (type === 'order') {
-      report.orderCount += 1;
-      if (record.status !== 'rejected') report.orderRevenue += Number(record.total || 0);
-    } else {
-      report.bookingCount += 1;
-      if (record.status !== 'rejected') report.bookingValue += Number(record.total || 0);
-    }
-    reports.set(key, report);
-  };
-  orders.forEach((order) => addRecord(order, 'order'));
-  bookings.forEach((booking) => addRecord(booking, 'booking'));
-  return [...reports.values()].sort((a, b) => b.key.localeCompare(a.key));
-};
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'orders', label: 'Orders', icon: ShoppingBag },
   { id: 'bookings', label: 'Service bookings', icon: Package },
-  { id: 'customers', label: 'Customers', icon: Users },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
   { id: 'discounts', label: 'Discounts', icon: BadgePercent },
 ];
 
 const AdminPage = ({ onNavigate, onSignOut }) => {
   const [section, setSection] = useState('overview');
   const [orders, setOrders] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [bookingSummary, setBookingSummary] = useState({ total: 0, uniqueCustomers: 0, carWashRequests: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [reportSearch, setReportSearch] = useState('');
-  const [reportStartDate, setReportStartDate] = useState('');
-  const [reportEndDate, setReportEndDate] = useState('');
-  const [reportPeriod, setReportPeriod] = useState('month');
+  const [bookingDateRange, setBookingDateRange] = useState('all');
   const [saving, setSaving] = useState(false);
   const [discountForm, setDiscountForm] = useState(null);
   const [viewingOrder, setViewingOrder] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [orderData, discountData, bookingData, customerData] = await Promise.all([
-        getOrders(), getDiscounts(), getServiceBookings(), getCustomers(),
+      const [orderData, discountData, bookingData] = await Promise.all([
+        getOrders(), getDiscounts(), getServiceBookings(),
       ]);
       setOrders(orderData.orders);
-      setCustomers(customerData.customers);
       setDiscounts(discountData.discounts);
       setBookings(bookingData.bookings);
       setBookingSummary(bookingData.summary);
@@ -120,15 +82,6 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
     revenue: orders.filter((order) => order.status !== 'rejected')
       .reduce((sum, order) => sum + Number(order.total), 0),
   }), [orders]);
-  const pendingOrderCount = useMemo(
-    () => orders.filter((order) => order.status === 'pending').length,
-    [orders]
-  );
-  const pendingBookingCount = useMemo(
-    () => bookings.filter((booking) => booking.status === 'pending').length,
-    [bookings]
-  );
-  const notificationCount = pendingOrderCount + pendingBookingCount;
 
   const filteredOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -138,14 +91,6 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
         .some((value) => String(value || '').toLowerCase().includes(query))
     );
   }, [orders, search]);
-  const filteredCustomers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return customers;
-    return customers.filter((customer) =>
-      [customer.name, customer.email, customer.phone]
-        .some((value) => String(value || '').toLowerCase().includes(query))
-    );
-  }, [customers, search]);
 
   const changeStatus = async (orderId, status) => {
     setSaving(true);
@@ -228,56 +173,100 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
   });
 
   const recentOrders = orders.slice(0, 5);
-  const reportData = useMemo(() => {
-    const query = reportSearch.trim().toLowerCase();
-    const inDateRange = (createdAt) => {
-      const key = dateKeySafe(createdAt);
-      return key && (!reportStartDate || key >= reportStartDate) && (!reportEndDate || key <= reportEndDate);
-    };
-    const matchesSearch = (values) => !query || values.some((value) => String(value || '').toLowerCase().includes(query));
-    const reportOrders = orders.filter((order) => inDateRange(order.createdAt)
-      && matchesSearch([order.orderNumber, order.customerName, order.email, order.phone]));
-    const reportBookings = bookings.filter((booking) => inDateRange(booking.createdAt)
-      && matchesSearch([booking.customerName, booking.email, booking.phone, booking.vehicle, booking.packageName]));
-    return { orders: reportOrders, bookings: reportBookings };
-  }, [orders, bookings, reportSearch, reportStartDate, reportEndDate]);
-  const monthlyReports = useMemo(
-    () => buildPeriodReports(reportData.orders, reportData.bookings, 'month'),
-    [reportData]
-  );
-  const yearlyReports = useMemo(
-    () => buildPeriodReports(reportData.orders, reportData.bookings, 'year'),
-    [reportData]
-  );
-  const reportTotals = useMemo(() => ({
-    orders: reportData.orders.length,
-    orderRevenue: reportData.orders.filter((order) => order.status !== 'rejected')
-      .reduce((total, order) => total + Number(order.total || 0), 0),
-    bookings: reportData.bookings.length,
-    bookingValue: reportData.bookings.filter((booking) => booking.status !== 'rejected')
-      .reduce((total, booking) => total + Number(booking.total || 0), 0),
-  }), [reportData]);
+  const filteredBookings = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const rangeStart = bookingDateRange === 'today' ? dateOffset(0)
+      : bookingDateRange === '7days' ? dateOffset(6)
+        : bookingDateRange === '30days' ? dateOffset(29) : null;
+    return bookings.filter((booking) => {
+      const matchesSearch = !query || [booking.customerName, booking.email, booking.phone, booking.vehicle, booking.packageName]
+        .some((value) => String(value || '').toLowerCase().includes(query));
+      const matchesDate = !rangeStart || new Date(booking.createdAt) >= rangeStart;
+      return matchesSearch && matchesDate;
+    });
+  }, [bookings, search, bookingDateRange]);
+  const todayBookings = bookings.filter((booking) => dateKey(booking.createdAt) === dateKey(new Date()));
+  const todayBookingValue = todayBookings
+    .filter((booking) => booking.status !== 'rejected')
+    .reduce((sum, booking) => sum + Number(booking.total), 0);
+  const serviceBreakdown = useMemo(() => {
+    const services = new Map();
+    filteredBookings.forEach((booking) => {
+      const service = services.get(booking.packageId) || {
+        id: booking.packageId, name: booking.packageName, count: 0, value: 0,
+      };
+      service.count += 1;
+      if (booking.status !== 'rejected') service.value += Number(booking.total);
+      services.set(booking.packageId, service);
+    });
+    return [...services.values()].sort((a, b) => b.count - a.count);
+  }, [filteredBookings]);
+  const dailyBookingValues = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = dateOffset(6 - index);
+      return {
+        key: dateKey(date),
+        label: date.toLocaleDateString('en-IN', { weekday: 'short' }),
+        dateLabel: date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+        value: 0,
+        bookings: 0,
+      };
+    });
+    const byDay = new Map(days.map((day) => [day.key, day]));
+    bookings.forEach((booking) => {
+      const day = byDay.get(dateKey(booking.createdAt));
+      if (day) {
+        day.bookings += 1;
+        if (booking.status !== 'rejected') day.value += Number(booking.total);
+      }
+    });
+    return days;
+  }, [bookings]);
+  const maxDailyBookingValue = Math.max(...dailyBookingValues.map((day) => day.value), 1);
+
+  const exportBookings = () => {
+    const columns = ['Customer name', 'Phone', 'Email', 'Vehicle', 'Service', 'Booking date', 'Appointment date', 'Appointment time', 'Estimated value', 'Status'];
+    const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = filteredBookings.map((booking) => [
+      booking.customerName, booking.phone, booking.email, booking.vehicle,
+      booking.packageName, dateLabel(booking.createdAt), booking.appointmentDate,
+      booking.appointmentTime, booking.total, booking.status,
+    ]);
+    const csv = [columns, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `service-bookings-${dateKey(new Date())}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className={`admin-shell ${sidebarCollapsed ? 'admin-shell-sidebar-collapsed' : ''}`}>
-      <AdminSidebar
-        items={NAV_ITEMS.map((item) => ({
-          ...item,
-          count: item.id === 'orders' ? summary.pending : item.id === 'bookings' ? bookingSummary.total : 0,
-        }))}
-        activeItem={section}
-        onSelect={(id) => {
-          setSection(id);
-          setMobileNavOpen(false);
-        }}
-        onSignOut={onSignOut}
-        counts={{
-          orders: summary.pending,
-          bookings: bookingSummary.total,
-        }}
-        mobileNavOpen={mobileNavOpen}
-        onCloseMobileMenu={() => setMobileNavOpen(false)}
-      />
+      <aside className={`admin-sidebar ${mobileNavOpen ? 'admin-sidebar-open' : ''}`}>
+        <div className="admin-brand">
+          <span className="admin-brand-mark"><span>U</span></span>
+          <span><strong>UNIQUE</strong><small>SHOWROOM ADMIN</small></span>
+          <button className="admin-mobile-close" onClick={() => setMobileNavOpen(false)} aria-label="Close menu"><X size={19} /></button>
+        </div>
+        <div className="admin-side-label">WORKSPACE</div>
+        <nav className="admin-nav" aria-label="Admin navigation">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button key={id} className={`admin-nav-item ${section === id ? 'active' : ''}`} title={label} aria-current={section === id ? 'page' : undefined} onClick={() => { setSection(id); setMobileNavOpen(false); }}>
+              <Icon size={18} strokeWidth={1.8} /><span>{label}</span>
+              {id === 'orders' && summary.pending > 0 && <span className="admin-nav-count">{summary.pending}</span>}
+              {id === 'bookings' && bookingSummary.total > 0 && <span className="admin-nav-count">{bookingSummary.total}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="admin-sidebar-bottom">
+          <div className="admin-store-link">
+            <span className="admin-store-icon"><ShieldCheck size={17} /></span>
+            <span><b>Store status</b><small><i /> Open and accepting orders</small></span>
+          </div>
+          <button className="admin-nav-item admin-back-store" title="Sign out" onClick={onSignOut}><LogOut size={17} /><span>Sign out</span></button>
+        </div>
+      </aside>
       {mobileNavOpen && <button className="admin-nav-scrim" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
 
       <main className="admin-main">
@@ -286,8 +275,6 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
             className="admin-menu-toggle"
             aria-label="Toggle sidebar navigation"
             title="Toggle sidebar navigation"
-            aria-expanded={window.innerWidth <= 760 ? mobileNavOpen : !sidebarCollapsed}
-            aria-controls="admin-sidebar"
             onClick={() => {
               if (window.innerWidth <= 760) {
                 setMobileNavOpen((open) => !open);
@@ -298,56 +285,7 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
           ><Menu size={21} /></button>
           <div className="admin-breadcrumb">Unique Showroom <span>/</span> <b>{NAV_ITEMS.find((item) => item.id === section)?.label}</b></div>
           <div className="admin-top-actions">
-            <div className="admin-notification-wrap">
-              <button
-                className="admin-icon-btn"
-                aria-label="Notifications"
-                aria-expanded={notificationsOpen}
-                aria-controls="admin-notifications"
-                onClick={() => setNotificationsOpen((open) => !open)}
-              >
-                <Bell size={18} />
-                {notificationCount > 0 && <i />}
-              </button>
-              {notificationsOpen && (
-                <section className="admin-notifications" id="admin-notifications" aria-label="Notifications">
-                  <div className="admin-notifications-heading">
-                    <b>Notifications</b>
-                    <span>{notificationCount}</span>
-                  </div>
-                  {notificationCount ? (
-                    <div className="admin-notification-list">
-                      {pendingOrderCount > 0 && (
-                        <button
-                          onClick={() => {
-                            setSection('orders');
-                            setNotificationsOpen(false);
-                          }}
-                        >
-                          <span className="admin-notification-icon"><ShoppingBag size={16} /></span>
-                          <span><b>{pendingOrderCount} pending {pendingOrderCount === 1 ? 'order' : 'orders'}</b><small>Review customer orders</small></span>
-                          <ArrowRight size={15} />
-                        </button>
-                      )}
-                      {pendingBookingCount > 0 && (
-                        <button
-                          onClick={() => {
-                            setSection('bookings');
-                            setNotificationsOpen(false);
-                          }}
-                        >
-                          <span className="admin-notification-icon"><Package size={16} /></span>
-                          <span><b>{pendingBookingCount} pending {pendingBookingCount === 1 ? 'service booking' : 'service bookings'}</b><small>Review service requests</small></span>
-                          <ArrowRight size={15} />
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="admin-notifications-empty">You’re all caught up.</p>
-                  )}
-                </section>
-              )}
-            </div>
+            <button className="admin-icon-btn" aria-label="Notifications"><Bell size={18} /><i /></button>
             <div className="admin-profile"><div className="admin-avatar">A</div><span><b>Admin</b><small>Store manager</small></span><ChevronDown size={14} /></div>
           </div>
         </header>
@@ -356,8 +294,8 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
           <div className="admin-page-heading">
             <div>
               <div className="admin-eyebrow"><span /> SHOWROOM MANAGEMENT</div>
-              <h1>{section === 'overview' ? 'Good morning, Admin' : section === 'orders' ? 'Orders' : section === 'bookings' ? 'Service bookings' : section === 'customers' ? 'Customers' : section === 'reports' ? 'Reports' : 'Discounts'}</h1>
-              <p>{section === 'overview' ? 'Here’s what’s happening at your store today.' : section === 'orders' ? 'Review, approve, and keep track of customer orders.' : section === 'bookings' ? 'See who requested a wash or service and manage reservations.' : section === 'customers' ? 'View customer accounts registered with your showroom.' : section === 'reports' ? 'Review monthly and yearly order and service performance.' : 'Create and manage promotional codes for your store.'}</p>
+              <h1>{section === 'overview' ? 'Good morning, Admin' : section === 'orders' ? 'Orders' : section === 'bookings' ? 'Service bookings' : 'Discounts'}</h1>
+              <p>{section === 'overview' ? 'Here’s what’s happening at your store today.' : section === 'orders' ? 'Review, approve, and keep track of customer orders.' : section === 'bookings' ? 'See who requested a wash or service and manage reservations.' : 'Create and manage promotional codes for your store.'}</p>
             </div>
             <div className="admin-heading-actions">
               <button className="admin-date-pill"><Clock3 size={15} /> All time <ChevronDown size={14} /></button>
@@ -407,115 +345,52 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
                 </section>
               )}
               {section === 'bookings' && (
-                <ServiceBookingsPage
-                  bookings={bookings}
-                  bookingSummary={bookingSummary}
-                  saving={saving}
-                  onStatusChange={changeBookingStatus}
-                />
-              )}
-              {section === 'customers' && (
-                <section className="admin-panel admin-orders-panel">
-                  <div className="admin-panel-heading">
-                    <div>
-                      <h2>Customer accounts <span className="admin-total-count">{filteredCustomers.length}</span></h2>
-                      <p>Customers who have registered with the showroom.</p>
-                    </div>
-                    <div className="admin-order-tools">
-                      <label className="admin-search">
-                        <Search size={16} />
-                        <input
-                          aria-label="Search customers"
-                          placeholder="Search customers…"
-                          value={search}
-                          onChange={(event) => setSearch(event.target.value)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  {filteredCustomers.length ? (
-                    <div className="admin-table-scroll">
-                      <table className="admin-orders-table">
-                        <thead><tr><th>CUSTOMER</th><th>EMAIL</th><th>PHONE</th><th>REGISTERED</th></tr></thead>
-                        <tbody>
-                          {filteredCustomers.map((customer) => (
-                            <tr key={customer.id}>
-                              <td><b>{customer.name}</b></td>
-                              <td>{customer.email}</td>
-                              <td>{customer.phone || '—'}</td>
-                              <td>{dateLabel(customer.createdAt)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <EmptyState
-                      title={customers.length ? 'No matching customers' : 'No customer accounts yet'}
-                      text={customers.length ? 'Try searching by name, email, or phone number.' : 'New customer accounts will appear here after sign-in.'}
-                    />
-                  )}
-                </section>
-              )}
-              {section === 'reports' && (
                 <>
-                  <section className="admin-report-filters" aria-label="Report filters">
-                    <label className="admin-report-search">
-                      <Search size={16} />
-                      <input
-                        aria-label="Search reports"
-                        placeholder="Search customer, order, vehicle, or service…"
-                        value={reportSearch}
-                        onChange={(event) => setReportSearch(event.target.value)}
-                      />
-                    </label>
-                    <label className="admin-report-date">
-                      <span>From</span>
-                      <input
-                        aria-label="Report start date"
-                        type="date"
-                        value={reportStartDate}
-                        max={reportEndDate || undefined}
-                        onChange={(event) => setReportStartDate(event.target.value)}
-                      />
-                    </label>
-                    <label className="admin-report-date">
-                      <span>To</span>
-                      <input
-                        aria-label="Report end date"
-                        type="date"
-                        value={reportEndDate}
-                        min={reportStartDate || undefined}
-                        onChange={(event) => setReportEndDate(event.target.value)}
-                      />
-                    </label>
-                    {(reportSearch || reportStartDate || reportEndDate) && (
-                      <button
-                        className="admin-report-clear"
-                        onClick={() => {
-                          setReportSearch('');
-                          setReportStartDate('');
-                          setReportEndDate('');
-                        }}
-                      >
-                        Clear filters
-                      </button>
-                    )}
-                  </section>
-                  <div className="admin-report-summary">
-                    <MetricCard icon={ShoppingBag} label="Orders" value={reportTotals.orders} note="Matching selected filters" tone="dark" />
-                    <MetricCard icon={CircleDollarSign} label="Order revenue" value={money(reportTotals.orderRevenue)} note="Excludes rejected orders" tone="blue" />
-                    <MetricCard icon={Package} label="Service bookings" value={reportTotals.bookings} note="Matching selected filters" tone="green" />
-                    <MetricCard icon={CircleDollarSign} label="Estimated service value" value={money(reportTotals.bookingValue)} note="Excludes rejected bookings" tone="amber" />
+                  <div className="admin-service-summary">
+                    <MetricCard icon={Package} label="Service bookings" value={bookingSummary.total} note="All customer reservations" tone="dark" />
+                    <MetricCard icon={Users} label="Unique customers" value={bookingSummary.uniqueCustomers} note="By customer email" tone="blue" />
+                    <MetricCard icon={CarFront} label="Car wash requests" value={bookingSummary.carWashRequests} note="Wash package bookings" tone="green" />
+                    <MetricCard icon={CircleDollarSign} label="Today's service income" value={money(todayBookingValue)} note="Booking estimate; excludes rejected" tone="amber" />
                   </div>
-                  <ReportTable
-                    period={reportPeriod}
-                    onPeriodChange={setReportPeriod}
-                    reports={reportPeriod === 'month' ? monthlyReports : yearlyReports}
-                  />
-                  <p className="admin-report-note">
-                    Service booking values are estimates, not recorded payments. Revenue and estimates exclude rejected records.
-                  </p>
+                  <div className="admin-booking-analytics">
+                    <section className="admin-analytics-card">
+                      <div className="admin-analytics-heading"><div><h3>Daily service income</h3><p>Estimated value of requests created in the last 7 days</p></div><span className="admin-analytics-badge"><CalendarDays size={13} /> 7 days</span></div>
+                      <div className="admin-revenue-chart" role="img" aria-label="Daily estimated booking value for the last seven days">
+                        {dailyBookingValues.map((day) => (
+                          <div className="admin-chart-column" key={day.key}>
+                            <span className="admin-chart-value">{day.value ? money(day.value) : '—'}</span>
+                            <div className="admin-chart-bar-track"><div className="admin-chart-bar" style={{ height: `${day.value ? Math.max(8, day.value / maxDailyBookingValue * 100) : 0}%` }} /></div>
+                            <b>{day.label}</b><small>{day.dateLabel}</small>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="admin-analytics-disclaimer">Booking estimates, not payment records. Rejected requests are excluded.</p>
+                    </section>
+                    <section className="admin-analytics-card">
+                      <div className="admin-analytics-heading"><div><h3>Service demand</h3><p>Bookings by selected service package</p></div><span className="admin-analytics-badge">{serviceBreakdown.length} services</span></div>
+                      <div className="admin-service-breakdown">
+                        {serviceBreakdown.length ? serviceBreakdown.map((service) => (
+                          <div className="admin-service-breakdown-row" key={service.id}>
+                            <span className="admin-service-dot" />
+                            <span className="admin-service-breakdown-name">{service.name}<small>{service.count} booking{service.count === 1 ? '' : 's'}</small></span>
+                            <b>{money(service.value)}</b>
+                          </div>
+                        )) : <p className="admin-analytics-empty">Service package counts will appear after customers book.</p>}
+                      </div>
+                    </section>
+                  </div>
+                  <div className="admin-bookings-toolbar">
+                    <div className="admin-bookings-toolbar-stats"><span><b>{filteredBookings.length}</b> requests shown</span><span><b>{money(filteredBookings.filter((booking) => booking.status !== 'rejected').reduce((sum, booking) => sum + Number(booking.total), 0))}</b> estimated value</span></div>
+                    <div className="admin-booking-filters">
+                      <label className="admin-date-filter"><CalendarDays size={15} /><select value={bookingDateRange} onChange={(event) => setBookingDateRange(event.target.value)} aria-label="Filter bookings by date"><option value="today">Today</option><option value="7days">Last 7 days</option><option value="30days">Last 30 days</option><option value="all">All dates</option></select><ChevronDown size={13} /></label>
+                      <button className="admin-export-btn" onClick={exportBookings} disabled={!filteredBookings.length}><Download size={15} /> Export CSV</button>
+                    </div>
+                  </div>
+                  <section className="admin-panel admin-orders-panel">
+                    <div className="admin-panel-heading"><div><h2>Customer service requests <span className="admin-total-count">{filteredBookings.length}</span></h2><p>{bookingSummary.carWashRequests} car wash requests from {bookingSummary.uniqueCustomers} unique customers overall.</p></div><div className="admin-order-tools"><label className="admin-search"><Search size={16} /><input placeholder="Search customers or service…" value={search} onChange={(event) => setSearch(event.target.value)} /></label></div></div>
+                    <BookingsTable bookings={filteredBookings} saving={saving} onStatusChange={changeBookingStatus} />
+                    {filteredBookings.length === 0 && <EmptyState title={bookings.length ? 'No matching bookings' : 'No service bookings yet'} text={bookings.length ? 'Try another date, customer, vehicle, or service name.' : 'Customer reservations will show here after they are submitted.'} />}
+                  </section>
                 </>
               )}
               {section === 'discounts' && (
@@ -583,51 +458,9 @@ const AdminPage = ({ onNavigate, onSignOut }) => {
   );
 };
 
-const ReportTable = ({ period, onPeriodChange, reports }) => {
-  const isMonthly = period === 'month';
-  return (
-  <section className="admin-panel admin-report-panel">
-    <div className="admin-panel-heading">
-      <div>
-        <h2>{isMonthly ? 'Monthly report' : 'Yearly report'}</h2>
-        <p>Orders and service bookings grouped by {isMonthly ? 'month' : 'year'}.</p>
-      </div>
-      <label className="admin-report-period">
-        <CalendarDays size={15} />
-        <select
-          aria-label="Report period"
-          value={period}
-          onChange={(event) => onPeriodChange(event.target.value)}
-        >
-          <option value="month">Monthly</option>
-          <option value="year">Yearly</option>
-        </select>
-        <ChevronDown size={13} />
-      </label>
-    </div>
-    {reports.length ? (
-      <div className="admin-table-scroll">
-        <table className="admin-report-table">
-          <thead>
-            <tr><th>PERIOD</th><th>ORDERS</th><th>ORDER REVENUE</th><th>SERVICE BOOKINGS</th><th>EST. SERVICE VALUE</th></tr>
-          </thead>
-          <tbody>
-            {reports.map((report) => (
-              <tr key={report.key}>
-                <td><b>{report.label}</b></td>
-                <td>{report.orderCount}</td>
-                <td><b>{money(report.orderRevenue)}</b></td>
-                <td>{report.bookingCount}</td>
-                <td><b>{money(report.bookingValue)}</b></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    ) : <p className="admin-report-empty">No {isMonthly ? 'monthly' : 'yearly'} data matches the selected filters.</p>}
-  </section>
-  );
-};
+const MetricCard = ({ icon: Icon, label, value, note, tone }) => (
+  <article className="admin-metric-card"><div className={`admin-metric-icon metric-${tone}`}><Icon size={19} /></div><span className="admin-metric-label">{label}</span><b className="admin-metric-value">{value}</b><span className="admin-metric-note"><i />{note}</span></article>
+);
 
 const OrdersTable = ({ orders, saving, onStatusChange, onView, compact = false }) => (
   <div className="admin-table-scroll">
@@ -646,6 +479,28 @@ const OrdersTable = ({ orders, saving, onStatusChange, onView, compact = false }
       ))}</tbody>
     </table>
   </div>
+);
+
+const BookingsTable = ({ bookings, saving, onStatusChange }) => (
+  <div className="admin-table-scroll">
+    <table className="admin-orders-table">
+      <thead><tr><th>CUSTOMER</th><th>SERVICE &amp; VEHICLE</th><th>APPOINTMENT</th><th>ESTIMATE</th><th>STATUS</th><th>UPDATE</th></tr></thead>
+      <tbody>{bookings.map((booking) => (
+        <tr key={booking.id}>
+          <td><span className="admin-customer-name">{booking.customerName}</span><small className="admin-customer-email">{booking.email} · {booking.phone}</small></td>
+          <td><span className="admin-customer-name">{booking.packageName}</span><small className="admin-customer-email">{booking.vehicle} · {booking.vehicleType}</small></td>
+          <td>{booking.appointmentDate}<small className="admin-customer-email">{booking.appointmentTime}</small></td>
+          <td><b>{money(booking.total)}</b></td>
+          <td><span className={`admin-status-pill status-${booking.status}`}><i />{statusLabel(booking.status)}</span></td>
+          <td>{booking.status === 'pending' ? <div className="admin-approve-actions"><button disabled={saving} className="admin-approve-btn" onClick={() => onStatusChange(booking.id, 'approved')}><Check size={14} /> Approve</button><button disabled={saving} className="admin-reject-btn" onClick={() => onStatusChange(booking.id, 'rejected')}>Reject</button></div> : booking.status === 'approved' ? <button disabled={saving} className="admin-approve-btn" onClick={() => onStatusChange(booking.id, 'completed')}>Mark complete</button> : <span className="admin-customer-email">—</span>}</td>
+        </tr>
+      ))}</tbody>
+    </table>
+  </div>
+);
+
+const EmptyState = ({ title, text, action }) => (
+  <div className="admin-empty-state"><span><Package size={23} /></span><b>{title}</b><p>{text}</p>{action}</div>
 );
 
 export { AdminPage };

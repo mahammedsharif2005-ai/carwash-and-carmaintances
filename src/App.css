@@ -119,19 +119,6 @@ body {
   gap: clamp(16px, 2.3vw, 34px);
 }
 
-.store-site-menu-toggle {
-  display: none;
-  width: 38px;
-  height: 38px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e7e9ed;
-  border-radius: 9px;
-  color: var(--brand-black);
-  background: #fff;
-  cursor: pointer;
-}
-
 .store-site-nav button {
   padding: 4px 0;
   color: var(--text-secondary);
@@ -291,19 +278,6 @@ body {
   display: flex;
   align-items: center;
   gap: 34px;
-}
-
-.hero-menu-toggle {
-  display: none;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #e7e9ed;
-  border-radius: 10px;
-  color: var(--brand-black);
-  background: #fff;
-  cursor: pointer;
 }
 
 .nav-item {
@@ -2346,37 +2320,6 @@ body {
 
   .hero-nav-links {
     display: none;
-  }
-
-  .hero-menu-toggle {
-    display: inline-flex;
-    flex: 0 0 40px;
-  }
-
-  .hero-nav {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .hero-nav-links-open {
-    position: absolute;
-    top: calc(100% - 18px);
-    right: 0;
-    left: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 8px 14px;
-    border: 1px solid #eaedf2;
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.12);
-  }
-
-  .hero-nav-links-open .nav-item {
-    padding: 10px 2px;
   }
 
   .hero-main-title {
@@ -6406,35 +6349,14 @@ body {
   }
 
   .store-site-nav {
-    display: none;
-    order: 4;
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 8px 0;
-  }
-
-  .store-site-nav-open {
-    display: flex;
-  }
-
-  .store-site-menu-toggle {
-    display: inline-flex;
-    order: 2;
-    margin-left: auto;
-    flex: 0 0 38px;
-  }
-
-  .store-site-actions {
     order: 3;
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
   }
 
   .store-site-nav button {
-    justify-content: flex-start;
-    min-height: 40px;
-    padding: 8px 2px;
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .store-site-actions {

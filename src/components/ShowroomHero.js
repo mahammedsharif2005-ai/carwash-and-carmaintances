@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Calendar, ArrowRight, LogIn, LogOut, Menu, X } from 'lucide-react';
+import { ChevronRight, Calendar, ArrowRight, LogIn, LogOut } from 'lucide-react';
 import { CAR_BRANDS } from '../data/carsData';
 import { BrandLogo } from './BrandLogos';
 
@@ -7,16 +7,11 @@ export const ShowroomHero = ({ onOpenBooking, onNavigate, customer, onCustomerSi
   const [selectedBrandIndex, setSelectedBrandIndex] = useState(0); // Mahindra as default (Index 0)
   const [serviceMode, setServiceMode] = useState('Car Washing'); // toggleable headline focus
   const [selectedCity, setSelectedCity] = useState('Mumbai');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const currentCar = CAR_BRANDS[selectedBrandIndex];
 
   const handleNextBrand = () => {
     setSelectedBrandIndex((prev) => (prev + 1) % CAR_BRANDS.length);
-  };
-  const navigateFromMenu = (path) => {
-    setMobileNavOpen(false);
-    onNavigate(path);
   };
 
   return (
@@ -35,48 +30,35 @@ export const ShowroomHero = ({ onOpenBooking, onNavigate, customer, onCustomerSi
         </div>
 
         {/* Center: Navigation Links */}
-        <nav
-          className={`hero-nav-links ${mobileNavOpen ? 'hero-nav-links-open' : ''}`}
-          id="hero-main-navigation"
-          aria-label="Main Navigation"
-        >
+        <nav className="hero-nav-links" aria-label="Main Navigation">
           <a href="/about" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/about');
+            onNavigate('/about');
           }}>About Us</a>
           <a href="/cars" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/cars');
+            onNavigate('/cars');
           }}>Cars</a>
           <a href="/packages" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/packages');
+            onNavigate('/packages');
           }}>Packages</a>
           <a href="/maintenance" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/maintenance');
+            onNavigate('/maintenance');
           }}>Maintenance</a>
           <a href="/maintenance" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/maintenance');
+            onNavigate('/maintenance');
           }}>Store</a>
           <a href="/help" className="nav-item" onClick={(event) => {
             event.preventDefault();
-            navigateFromMenu('/help');
+            onNavigate('/help');
           }}>Help</a>
         </nav>
 
         {/* Right: Black Pill Button with Apple Icon or Book Service */}
         <div className="hero-nav-right">
-          <button
-            className="hero-menu-toggle"
-            aria-label="Toggle main navigation"
-            aria-expanded={mobileNavOpen}
-            aria-controls="hero-main-navigation"
-            onClick={() => setMobileNavOpen((open) => !open)}
-          >
-            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
           {customer ? (
             <div className="hero-customer-session">
               <span>Hi, {customer.name.split(' ')[0]}</span>
@@ -214,6 +196,20 @@ export const ShowroomHero = ({ onOpenBooking, onNavigate, customer, onCustomerSi
             <div className="car-ground-shadow"></div>
           </div>
 
+          {/* Floating Vehicle Specs Pill */}
+          <div className="car-specs-pill">
+            <span className="car-name-bold">{currentCar.name} {currentCar.model}</span>
+            {currentCar.price && (
+              <>
+                <span className="spec-dot">•</span>
+                <span className="car-hero-price-tag">{currentCar.price}</span>
+              </>
+            )}
+            <span className="spec-dot">•</span>
+            <span>{currentCar.specs.hp}</span>
+            <span className="spec-dot">•</span>
+            <span className="wash-time-tag">Fast Wash: {currentCar.specs.washTime}</span>
+          </div>
         </div>
       </div>
 

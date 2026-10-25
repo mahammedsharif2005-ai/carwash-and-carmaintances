@@ -1,14 +1,7 @@
-import React, { useState } from 'react';
-import { LogIn, LogOut, Calendar, Menu, X } from 'lucide-react';
+import React from 'react';
+import { LogIn, LogOut, Calendar } from 'lucide-react';
 
-export const SiteHeader = ({ onNavigate, currentPage, customer, onSignOut, onOpenBooking }) => {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const navigateFromMenu = (path) => {
-    setMobileNavOpen(false);
-    onNavigate(path);
-  };
-
-  return (
+export const SiteHeader = ({ onNavigate, currentPage, customer, onSignOut, onOpenBooking }) => (
   <header className="store-site-header">
     <div className="store-site-header-inner">
       <button className="store-site-brand" onClick={() => onNavigate('/')} aria-label="Unique home">
@@ -17,26 +10,13 @@ export const SiteHeader = ({ onNavigate, currentPage, customer, onSignOut, onOpe
         </svg>
         <span>Unique</span>
       </button>
-      <nav
-        className={`store-site-nav ${mobileNavOpen ? 'store-site-nav-open' : ''}`}
-        id="store-main-navigation"
-        aria-label="Main navigation"
-      >
-        <button className={currentPage === 'about' ? 'active' : ''} aria-current={currentPage === 'about' ? 'page' : undefined} onClick={() => navigateFromMenu('/about')}>About Us</button>
-        <button className={currentPage === 'cars' ? 'active' : ''} aria-current={currentPage === 'cars' ? 'page' : undefined} onClick={() => navigateFromMenu('/cars')}>Cars</button>
-        <button className={currentPage === 'packages' ? 'active' : ''} aria-current={currentPage === 'packages' ? 'page' : undefined} onClick={() => navigateFromMenu('/packages')}>Packages</button>
-        <button className={currentPage === 'store' ? 'active' : ''} aria-current={currentPage === 'store' ? 'page' : undefined} onClick={() => navigateFromMenu('/maintenance')}>Store</button>
-        <button className={currentPage === 'help' ? 'active' : ''} aria-current={currentPage === 'help' ? 'page' : undefined} onClick={() => navigateFromMenu('/help')}>Help</button>
+      <nav className="store-site-nav" aria-label="Main navigation">
+        <button className={currentPage === 'about' ? 'active' : ''} aria-current={currentPage === 'about' ? 'page' : undefined} onClick={() => onNavigate('/about')}>About Us</button>
+        <button className={currentPage === 'cars' ? 'active' : ''} aria-current={currentPage === 'cars' ? 'page' : undefined} onClick={() => onNavigate('/cars')}>Cars</button>
+        <button className={currentPage === 'packages' ? 'active' : ''} aria-current={currentPage === 'packages' ? 'page' : undefined} onClick={() => onNavigate('/packages')}>Packages</button>
+        <button className={currentPage === 'store' ? 'active' : ''} aria-current={currentPage === 'store' ? 'page' : undefined} onClick={() => onNavigate('/maintenance')}>Store</button>
+        <button className={currentPage === 'help' ? 'active' : ''} aria-current={currentPage === 'help' ? 'page' : undefined} onClick={() => onNavigate('/help')}>Help</button>
       </nav>
-      <button
-        className="store-site-menu-toggle"
-        aria-label="Toggle main navigation"
-        aria-expanded={mobileNavOpen}
-        aria-controls="store-main-navigation"
-        onClick={() => setMobileNavOpen((open) => !open)}
-      >
-        {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
       <div className="store-site-actions">
         {customer ? (
           <div className="store-site-customer">
@@ -61,5 +41,4 @@ export const SiteHeader = ({ onNavigate, currentPage, customer, onSignOut, onOpe
       </div>
     </div>
   </header>
-  );
-};
+);

@@ -1,34 +1,25 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight, CarFront, KeyRound, Mail, ShieldCheck, UserRound, Sparkles, Droplets, Gauge, Phone } from 'lucide-react';
-import { adminLogin, customerLogin } from '../services/api';
+import { adminLogin } from '../services/api';
 import { Toast } from '../components/Toast';
 import './LoginPage.css';
 
-const LoginPage = ({ onNavigate, initialMode = 'customer', returnTo = '/' }) => {
+const LoginPage = ({ onNavigate, initialMode = 'customer' }) => {
   const [mode, setMode] = useState(initialMode);
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', password: '' });
   const [admin, setAdmin] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const continueAsCustomer = async (event) => {
+  const continueAsCustomer = (event) => {
     event.preventDefault();
-    setLoading(true);
     setError('');
-    try {
-      const { customer: profile } = await customerLogin({
-        name: customer.name.trim(),
-        email: customer.email.trim().toLowerCase(),
-        phone: customer.phone.trim(),
-        password: customer.password,
-      });
-      sessionStorage.setItem('customerProfile', JSON.stringify(profile));
-      onNavigate(returnTo);
-    } catch (loginError) {
-      setError(loginError.message);
-    } finally {
-      setLoading(false);
+    const profile = { name: customer.name.trim(), email: customer.email.trim().toLowerCase() };
+    if (customer.phone && customer.phone.trim()) {
+      profile.phone = customer.phone.trim();
     }
+    sessionStorage.setItem('customerProfile', JSON.stringify(profile));
+    onNavigate('/');
   };
 
   const signInAsAdmin = async (event) => {
@@ -188,11 +179,12 @@ const LoginPage = ({ onNavigate, initialMode = 'customer', returnTo = '/' }) => 
           {mode === 'customer' ? (
             <form className="login-form" onSubmit={continueAsCustomer}>
               <label htmlFor="customer-name-input">
-                Your name <small>(required for new accounts)</small>
+                Your name
                 <span className="login-input-wrap">
                   <UserRound size={17} className="input-icon" />
                   <input
                     id="customer-name-input"
+                    required
                     minLength={2}
                     maxLength={120}
                     autoComplete="name"
@@ -241,9 +233,7 @@ const LoginPage = ({ onNavigate, initialMode = 'customer', returnTo = '/' }) => 
                   <KeyRound size={17} className="input-icon" />
                   <input
                     id="customer-password-input"
-                    required
                     type="password"
-                    minLength={8}
                     maxLength={120}
                     autoComplete="current-password"
                     placeholder="Enter your password"
@@ -255,11 +245,11 @@ const LoginPage = ({ onNavigate, initialMode = 'customer', returnTo = '/' }) => 
 
               {error && <p className="login-error" role="alert">{error}</p>}
 
-              <button className="login-submit" type="submit" disabled={loading}>
-                {loading ? 'Signing in…' : 'Continue to showroom'} <ArrowRight size={16} />
+              <button className="login-submit" type="submit">
+                Continue to showroom <ArrowRight size={16} />
               </button>
               <p className="login-footnote">
-                First sign-in creates your account. Returning customers sign in with email and password.
+                Quick client access • Studio membership & booking concierge.
               </p>
             </form>
           ) : (
