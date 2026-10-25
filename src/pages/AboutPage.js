@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowRight, Sparkles, ShieldCheck, Calendar, ChevronRight, ChevronLeft, Camera } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import { SiteHeader } from '../components/SiteHeader';
 import { FooterReviews } from '../components/FooterReviews';
 import { publicAsset } from '../utils/publicAsset';
