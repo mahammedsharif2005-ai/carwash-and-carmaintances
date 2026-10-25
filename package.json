@@ -2,6 +2,7 @@
   "name": "carshowroom",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://mahammedsharif2005-ai.github.io/carwash-and-carmaintances",
   "proxy": "http://localhost:5000",
   "dependencies": {
     "@testing-library/dom": "^10.4.2",

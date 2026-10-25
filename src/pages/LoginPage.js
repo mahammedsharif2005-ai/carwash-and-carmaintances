@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight, CarFront, KeyRound, Mail, ShieldCheck, UserRound, Sparkles, Droplets, Gauge, Phone } from 'lucide-react';
 import { adminLogin } from '../services/api';
 import { Toast } from '../components/Toast';
+import { publicAsset } from '../utils/publicAsset';
 import './LoginPage.css';
 
 const LoginPage = ({ onNavigate, initialMode = 'customer' }) => {
@@ -55,7 +56,7 @@ const LoginPage = ({ onNavigate, initialMode = 'customer' }) => {
         <div
           className="login-showcase-bg"
           style={{
-            backgroundImage: "linear-gradient(135deg, rgba(8, 9, 13, 0.96) 0%, rgba(13, 15, 22, 0.86) 42%, rgba(8, 9, 13, 0.55) 100%), url('/images/mahindra_thar.jpg')"
+            backgroundImage: `linear-gradient(135deg, rgba(8, 9, 13, 0.96) 0%, rgba(13, 15, 22, 0.86) 42%, rgba(8, 9, 13, 0.55) 100%), url('${publicAsset('/images/mahindra_thar.jpg')}')`
           }}
         />
         <div className="login-showcase-glow" aria-hidden="true" />

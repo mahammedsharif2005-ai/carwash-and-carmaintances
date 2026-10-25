@@ -4,6 +4,16 @@ The showroom storefront is a React app. Its maintenance-store checkout creates
 pending orders in a Node.js API backed by MySQL, and the admin dashboard at
 `/admin` lets staff approve orders and manage discount codes.
 
+## GitHub Pages preview
+
+The frontend is published at
+https://mahammedsharif2005-ai.github.io/carwash-and-carmaintances/ by the
+GitHub Actions workflow whenever changes are pushed to `main`. In the
+repository's **Settings → Pages**, set the build and deployment source to
+**GitHub Actions**. The static preview does not host the Node.js API or MySQL
+database, so sign-in, bookings, checkout, and admin data require a separately
+hosted backend.
+
 ## Run the project with XAMPP
 
 1. Start **MySQL** in the XAMPP Control Panel.

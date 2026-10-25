@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Sparkles, CheckCircle2, ShieldCheck, Droplets } from 'lucide-react';
+import { publicAsset } from '../utils/publicAsset';
 
 export const VideoModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('foam');
@@ -47,7 +48,7 @@ export const VideoModal = ({ isOpen, onClose }) => {
         <div className="video-media-stage">
           {activeTab === 'foam' && (
             <div className="media-stage-content">
-              <img src="/images/foam_wash.jpg" alt="Active Foam Wash" className="stage-image" />
+              <img src={publicAsset('/images/foam_wash.jpg')} alt="Active Foam Wash" className="stage-image" />
               <div className="media-overlay-badge">
                 <span className="live-dot"></span> 4K Studio Wash Bay #1
               </div>
@@ -60,7 +61,7 @@ export const VideoModal = ({ isOpen, onClose }) => {
 
           {activeTab === 'interior' && (
             <div className="media-stage-content">
-              <img src="/images/interior_detail.jpg" alt="Interior Detailing" className="stage-image" />
+              <img src={publicAsset('/images/interior_detail.jpg')} alt="Interior Detailing" className="stage-image" />
               <div className="media-overlay-badge">
                 <span className="live-dot"></span> Swissvax Leather Treatment
               </div>
@@ -73,7 +74,7 @@ export const VideoModal = ({ isOpen, onClose }) => {
 
           {activeTab === 'finish' && (
             <div className="media-stage-content">
-              <img src="/images/mahindra_thar.jpg" alt="Finished Ceramic Coat" className="stage-image" />
+              <img src={publicAsset('/images/mahindra_thar.jpg')} alt="Finished Ceramic Coat" className="stage-image" />
               <div className="media-overlay-badge">
                 <span className="live-dot"></span> Final Inspection Complete
               </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, ShieldCheck, Droplets, ArrowLeftRight } from 'lucide-react';
+import { publicAsset } from '../utils/publicAsset';
 
 export const BeforeAfterSlider = () => {
   const [sliderPos, setSliderPos] = useState(50);
@@ -24,7 +25,7 @@ export const BeforeAfterSlider = () => {
         <div className="comparison-frame">
           {/* After Image (Full background) */}
           <img
-            src="/images/foam_wash.jpg"
+            src={publicAsset('/images/foam_wash.jpg')}
             alt="After High Gloss Detailing"
             className="comparison-img after-img"
           />
@@ -38,7 +39,7 @@ export const BeforeAfterSlider = () => {
             style={{ width: `${sliderPos}%` }}
           >
             <img
-              src="/images/mahindra_thar.jpg"
+              src={publicAsset('/images/mahindra_thar.jpg')}
               alt="Before Treatment"
               className="comparison-img before-img"
             />

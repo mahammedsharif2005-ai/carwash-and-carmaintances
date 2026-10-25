@@ -18,6 +18,7 @@ import {
 import { SERVICE_PACKAGES, SERVICE_ADDONS } from '../data/carsData';
 import { SiteHeader } from '../components/SiteHeader';
 import { FooterReviews } from '../components/FooterReviews';
+import { publicAsset } from '../utils/publicAsset';
 
 const VEHICLE_CATEGORIES = [
   { id: 'compact', label: 'Hatchback / Compact', surcharge: 0 },
@@ -70,7 +71,7 @@ const BAY_METHODOLOGY_STAGES = [
     id: '01',
     title: '0-PPM Snow Foam Pre-Wash',
     desc: 'pH-neutral active foam encapsulates grit particles, lifting them away without sponge contact. Rinsed with zero-hardness pure water.',
-    image: '/images/foam_wash.jpg',
+    image: publicAsset('/images/foam_wash.jpg'),
     chemistry: ['pH-Neutral Snow Foam', '0-PPM RO Pure Water', 'Touchless Air Dry'],
     duration: '35 mins',
     guarantee: '100% Swirl-Free',
@@ -79,7 +80,7 @@ const BAY_METHODOLOGY_STAGES = [
     id: '02',
     title: 'Single-Stage Jeweling Polish',
     desc: 'German dual-action random orbital machines remove fine swirl marks and oxidation, unlocking mirror-depth optical clarity.',
-    image: '/images/top_down_detailing.png',
+    image: publicAsset('/images/top_down_detailing.png'),
     chemistry: ['Rupes DA Polishers', 'Diminishing Micro-Abrasives', 'Paint Depth Gauge'],
     duration: '60 mins',
     guarantee: 'Optical Clarity',
@@ -88,7 +89,7 @@ const BAY_METHODOLOGY_STAGES = [
     id: '03',
     title: '320°F Dry Vapor Extraction',
     desc: 'Thermal steam dissolves stubborn grease, destroys allergens, and leaves OEM matte leather completely sterilized and supple.',
-    image: '/images/interior_detail.jpg',
+    image: publicAsset('/images/interior_detail.jpg'),
     chemistry: ['320°F Thermal Steam', 'pH 7.0 Leather Balm', 'Ozone Sterilization'],
     duration: '45 mins',
     guarantee: '99.9% Pathogen Kill',

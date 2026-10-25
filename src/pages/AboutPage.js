@@ -2,8 +2,9 @@ import React, { useState, useRef } from 'react';
 import { ArrowRight, Sparkles, ShieldCheck, Calendar, ChevronRight, ChevronLeft, Camera } from 'lucide-react';
 import { SiteHeader } from '../components/SiteHeader';
 import { FooterReviews } from '../components/FooterReviews';
+import { publicAsset } from '../utils/publicAsset';
 
-const DEFAULT_CREATOR_IMAGE = '/images/me.png';
+const DEFAULT_CREATOR_IMAGE = publicAsset('/images/me.png');
 
 const CREATOR_STORIES = [
   {
@@ -25,7 +26,7 @@ const CREATOR_STORIES = [
 
 export const AboutPage = ({ onNavigate, customer, onSignOut, onOpenBooking }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [imgSrc, setImgSrc] = useState('/images/me.png');
+  const [imgSrc, setImgSrc] = useState(DEFAULT_CREATOR_IMAGE);
   const fileInputRef = useRef(null);
 
   // Clear any old cached image so /images/me.png is shown cleanly
@@ -127,7 +128,7 @@ export const AboutPage = ({ onNavigate, customer, onSignOut, onOpenBooking }) =>
               {/* Car Image with soft ground shadow */}
               <div className="car-showcase-box">
                 <img
-                  src="/images/mahindra_thar.jpg"
+                  src={publicAsset('/images/mahindra_thar.jpg')}
                   alt="Mahindra Thar Roxx 4x4"
                   className="hero-car-image"
                 />
@@ -280,10 +281,10 @@ export const AboutPage = ({ onNavigate, customer, onSignOut, onOpenBooking }) =>
               <div className="about-value-top">
                 <span>
                   <img
-                    src="/images/reanch.png"
+                    src={publicAsset('/images/reanch.png')}
                     alt="Master Technicians"
                     className="about-wrench-icon"
-                    onError={(e) => { e.currentTarget.src = '/reanch.png'; }}
+                    onError={(e) => { e.currentTarget.src = publicAsset('/images/reanch.png'); }}
                   />
                 </span>
                 <span>02 / 03</span>
@@ -299,10 +300,10 @@ export const AboutPage = ({ onNavigate, customer, onSignOut, onOpenBooking }) =>
               <div className="about-value-top">
                 <span>
                   <img
-                    src="/images/vip.png"
+                    src={publicAsset('/images/vip.png')}
                     alt="VIP Concierge"
                     className="about-vip-icon"
-                    onError={(e) => { e.currentTarget.src = '/vip.png'; }}
+                    onError={(e) => { e.currentTarget.src = publicAsset('/images/vip.png'); }}
                   />
                 </span>
                 <span>03 / 03</span>

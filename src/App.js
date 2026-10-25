@@ -17,6 +17,19 @@ import { HelpPage } from './pages/HelpPage';
 import { createOrder, createServiceBooking } from './services/api';
 import { CAR_BRANDS } from './data/carsData';
 
+const APP_BASE_PATH = process.env.PUBLIC_URL
+  ? new URL(process.env.PUBLIC_URL, window.location.origin).pathname.replace(/\/$/, '')
+  : '';
+
+const getCurrentPath = () => {
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  const appPath = APP_BASE_PATH
+    && (pathname === APP_BASE_PATH || pathname.startsWith(`${APP_BASE_PATH}/`))
+    ? pathname.slice(APP_BASE_PATH.length)
+    : pathname;
+  return appPath.replace(/\/+$/, '') || '/';
+};
+
 const getCustomerProfile = () => {
   try {
     return JSON.parse(sessionStorage.getItem('customerProfile') || 'null');
@@ -31,23 +44,21 @@ function App() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCar, setSelectedCar] = useState(CAR_BRANDS[0]);
   const [defaultServiceId, setDefaultServiceId] = useState('ceramic-spa');
-  const [currentPath, setCurrentPath] = useState(
-    () => window.location.pathname.replace(/\/+$/, '') || '/'
-  );
+  const [currentPath, setCurrentPath] = useState(getCurrentPath);
 
   // ── Cart State ──
   const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname.replace(/\/+$/, '') || '/');
+      setCurrentPath(getCurrentPath());
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const navigateTo = useCallback((path) => {
-    window.history.pushState({}, '', path);
+    window.history.pushState({}, '', `${APP_BASE_PATH}${path}`);
     setCurrentPath(path);
   }, []);
 
